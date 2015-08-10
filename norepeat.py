@@ -1,3 +1,8 @@
+# By Rolf Redford Aug 10 2015
+# 
+# Modified from https://github.com/hexchat/hexchat-addons/tree/master/python/smart_filter
+# Thanks for awesome script, gave me ideas!
+
 __module_name__ = 'NoRepeat'
 __module_version__ = '1.0'
 __module_description__ = 'Removes repeative join/part messages'
@@ -10,14 +15,14 @@ last_seen = {}      # For each entry: the key is the user's nickname, the entry
                     #            element 1: how many times join/leave
 
 user_timeout = 1200  # How long before join/leave timer resets (20 min)
-user_toomany = 2    # (how many leave/join before shut up)
+user_toomany = 2    # how many leave/join before start eating join/leave
 
 halt = False
 
 def new_msg(word, word_eol, event, attrs):
     user = hexchat.strip(word[0])
     # If the user logged in before we did (which means the Join part of
-    # filter_msg didn't take effect), add him to the dict.
+    # filter_msg didn't take effect), add to the dict.
     if user not in last_seen:
         last_seen[user]= [time(), 1]
         return hexchat.EAT_NONE
@@ -35,8 +40,8 @@ def filter_msg(word, word_eol, event, attrs):
         last_seen[user] = [time(), 1]
         return hexchat.EAT_NONE
 
-    # If the user changed his nick, check if we've been tracking him before
-    # and transfer his stats if so. Otherwise, add him to the dict.
+    # If the user changed his nick, check if we've been tracking before
+    # and transfer the stats if so. Otherwise, add to the dict.
     if event == "Change Nick":
         user = hexchat.strip(word[1])
         old = hexchat.strip(word[0])
@@ -58,7 +63,7 @@ def filter_msg(word, word_eol, event, attrs):
     elif last_seen[user][1] > user_toomany:
         last_seen[user][0] = time()
         last_seen[user][1] += 1
-        print("now blocked 20 min for join/leave: ", user)
+        #print("now blocked 20 min for join/leave: ", user)
         return hexchat.EAT_ALL
 
 hooks_new = ["Your Message", "Channel Message", "Channel Msg Hilight",
@@ -70,4 +75,4 @@ for hook in hooks_new:
     hexchat.hook_print_attrs(hook, new_msg, hook, hexchat.PRI_HIGH)
 for hook in hooks_filter:
     hexchat.hook_print_attrs(hook, filter_msg, hook, hexchat.PRI_HIGH)
-print("\00304", __module_name__, "successfully loaded.\003")
+print(__module_name__, "successfully loaded.\003")
