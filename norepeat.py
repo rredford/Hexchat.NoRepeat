@@ -15,7 +15,7 @@ last_seen = {}      # For each entry: the key is the user's nickname, the entry
                     #            element 1: how many times join/leave
 
 user_timeout = 1200  # How long before join/leave timer resets (20 min)
-user_toomany = 2    # how many leave/join before start eating join/leave
+user_toomany = 2     # how many leave/join before start eating join/leave
 
 halt = False
 
@@ -24,10 +24,10 @@ def new_msg(word, word_eol, event, attrs):
     # If the user logged in before we did (which means the Join part of
     # filter_msg didn't take effect), add to the dict.
     if user not in last_seen:
-        last_seen[user]= [time(), 1]
+        last_seen[user]= [time(), 0]
         return hexchat.EAT_NONE
     # person spoke! reset join/leave count.
-    last_seen[user]= [time(), 1]
+    last_seen[user]= [time(), 0]
     return hexchat.EAT_NONE
     
 
@@ -36,9 +36,13 @@ def filter_msg(word, word_eol, event, attrs):
     """Filters join and part messages"""
     user = hexchat.strip(word[0])
     # If the user just joined, add
-    if user not in last_seen and event != "Change Nick":
-        last_seen[user] = [time(), 1]
-        return hexchat.EAT_NONE
+    if event != "Change Nick":
+        if user not in last_seen:
+            last_seen[user] = [time(), 0]
+            return hexchat.EAT_NONE
+        elif last_seen[user][0] + user_timeout < time():
+            # it has aged off so reset
+            last_seen[user] = [time(), 0]
 
     # If the user changed his nick, check if we've been tracking before
     # and transfer the stats if so. Otherwise, add to the dict.
@@ -46,12 +50,16 @@ def filter_msg(word, word_eol, event, attrs):
         user = hexchat.strip(word[1])
         old = hexchat.strip(word[0])
         if old in last_seen:
+            # first, check age
+            if last_seen[old][0] + user_timeout < time():
+                # it has aged off so reset
+                last_seen[old] = [time(), 0]
             # reset time but not how many times.
             last_seen[user] = [time(), last_seen[old][1]]
             del last_seen[old]
             return hexchat.EAT_NONE
         else:
-            last_seen[user] = [time(), 1]
+            last_seen[user] = [time(), 0]
             return hexchat.EAT_NONE
 
     # Not many yet, count and set time again
