@@ -20,7 +20,7 @@ user_toomany = 2     # how many leave/join before start eating join/leave
 halt = False
 
 def new_msg(word, word_eol, event, attrs):
-    user = hexchat.strip(word[0])
+    user = hexchat.strip(word[0]) + "@" +  hexchat.get_info("network")
     # If the user logged in before we did (which means the Join part of
     # filter_msg didn't take effect), add to the dict.
     if user not in last_seen:
@@ -34,7 +34,7 @@ def new_msg(word, word_eol, event, attrs):
 
 def filter_msg(word, word_eol, event, attrs):
     """Filters join and part messages"""
-    user = hexchat.strip(word[0])
+    user = hexchat.strip(word[0]) + "@" +  hexchat.get_info("network")
     # If the user just joined, add
     if event != "Change Nick":
         if user not in last_seen:
@@ -47,8 +47,8 @@ def filter_msg(word, word_eol, event, attrs):
     # If the user changed his nick, check if we've been tracking before
     # and transfer the stats if so. Otherwise, add to the dict.
     if event == "Change Nick":
-        user = hexchat.strip(word[1])
-        old = hexchat.strip(word[0])
+        user = hexchat.strip(word[1]) + "@" +  hexchat.get_info("network")
+        old = hexchat.strip(word[0]) + "@" +  hexchat.get_info("network")
         if old in last_seen:
             # first, check age
             if last_seen[old][0] + user_timeout < time():
