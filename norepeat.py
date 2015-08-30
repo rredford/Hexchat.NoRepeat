@@ -52,7 +52,7 @@ def filter_msg(word, word_eol, event, attrs):
             if user_sptoomany > -1:
               if last_seen[user][2] >= user_sptoomany:
 		last_seen[user] = [time(), last_seen[user][1] + 1, last_seen[user][2] + 1]
-		print("now blocked special case: ", user)
+		#print("now blocked special case: ", user)
                 return hexchat.EAT_ALL
             last_seen[user] = [time(), 0, last_seen[user][2]] # do not reset special case, it has no expire)
 
