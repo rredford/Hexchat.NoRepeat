@@ -13,9 +13,15 @@ from time import time
 last_seen = {}      # For each entry: the key is the user's nickname, the entry
                     # is a list: element 0: last seen time
                     #            element 1: how many times join/leave
+                    #            element 2: how many times join/leave special case
 
 user_timeout = 1200  # How long before join/leave timer resets (20 min)
+
 user_toomany = 2     # how many leave/join before start eating join/leave
+
+user_sptoomany = -1  # Special case for those who very rarely talk and disconnect
+                     # but overall spam channel with disc/c. -1 means disabled.
+                     # MUST be above user_toomany to work properly.
 
 halt = False
 
@@ -24,10 +30,10 @@ def new_msg(word, word_eol, event, attrs):
     # If the user logged in before we did (which means the Join part of
     # filter_msg didn't take effect), add to the dict.
     if user not in last_seen:
-        last_seen[user]= [time(), 0]
+        last_seen[user]= [time(), 0, 0]
         return hexchat.EAT_NONE
     # person spoke! reset join/leave count.
-    last_seen[user]= [time(), 0]
+    last_seen[user]= [time(), 0, 0] # this is only way to reset "special case".
     return hexchat.EAT_NONE
     
 
@@ -38,11 +44,17 @@ def filter_msg(word, word_eol, event, attrs):
     # If the user just joined, add
     if event != "Change Nick":
         if user not in last_seen:
-            last_seen[user] = [time(), 0]
+            last_seen[user] = [time(), 0, 0]
             return hexchat.EAT_NONE
         elif last_seen[user][0] + user_timeout < time():
             # it has aged off so reset
-            last_seen[user] = [time(), 0]
+            # now is special case enabled? if so, check if above special case number.
+            if user_sptoomany > -1:
+              if last_seen[user][2] >= user_sptoomany:
+		last_seen[user] = [time(), last_seen[user][1] + 1, last_seen[user][2] + 1]
+		print("now blocked special case: ", user)
+                return hexchat.EAT_ALL
+            last_seen[user] = [time(), 0, last_seen[user][2]] # do not reset special case, it has no expire)
 
     # If the user changed his nick, check if we've been tracking before
     # and transfer the stats if so. Otherwise, add to the dict.
@@ -53,13 +65,13 @@ def filter_msg(word, word_eol, event, attrs):
             # first, check age
             if last_seen[old][0] + user_timeout < time():
                 # it has aged off so reset
-                last_seen[old] = [time(), 0]
+                last_seen[old] = [time(), 0, last_seen[old[2]]] # dont reset special case
             # reset time but not how many times.
-            last_seen[user] = [time(), last_seen[old][1]]
+            last_seen[user] = [time(), last_seen[old][1], last_seen[old][2]]
             del last_seen[old]
             return hexchat.EAT_NONE
         else:
-            last_seen[user] = [time(), 0]
+            last_seen[user] = [time(), 0, 0]
             return hexchat.EAT_NONE
 
     # Not many yet, count and set time again
