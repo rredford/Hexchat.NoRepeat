@@ -65,7 +65,7 @@ def filter_msg(word, word_eol, event, attrs):
             # first, check age
             if last_seen[old][0] + user_timeout < time():
                 # it has aged off so reset
-                last_seen[old] = [time(), 0, last_seen[old[2]]] # dont reset special case
+                last_seen[old] = [time(), 0, last_seen[old][2]] # dont reset special case
             # reset time but not how many times.
             last_seen[user] = [time(), last_seen[old][1], last_seen[old][2]]
             del last_seen[old]
