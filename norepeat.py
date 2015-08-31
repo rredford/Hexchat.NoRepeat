@@ -17,7 +17,7 @@ last_seen = {}      # For each entry: the key is the user's nickname, the entry
 
 user_timeout = 1200  # How long before join/leave timer resets (20 min)
 
-user_toomany = 2     # how many leave/join before start eating join/leave
+user_toomany = 1     # how many leave/join before start eating join/leave
 
 user_sptoomany = -1  # Special case for those who very rarely talk and disconnect
                      # but overall spam channel with disc/c. -1 means disabled.
@@ -52,7 +52,7 @@ def filter_msg(word, word_eol, event, attrs):
             if user_sptoomany > -1:
               if last_seen[user][2] >= user_sptoomany:
 		last_seen[user] = [time(), last_seen[user][1] + 1, last_seen[user][2] + 1]
-		#print("now blocked special case: ", user)
+		print("now blocked special case: ", user)
                 return hexchat.EAT_ALL
             last_seen[user] = [time(), 0, last_seen[user][2]] # do not reset special case, it has no expire)
 
@@ -65,9 +65,11 @@ def filter_msg(word, word_eol, event, attrs):
             # first, check age
             if last_seen[old][0] + user_timeout < time():
                 # it has aged off so reset
-                last_seen[old] = [time(), 0, last_seen[old][2]] # dont reset special case
-            # reset time but not how many times.
-            last_seen[user] = [time(), last_seen[old][1], last_seen[old][2]]
+                last_seen[user] = [time(), 0, last_seen[old][2]] # dont reset special case
+	    else:
+	        # reset time but not how many times nor special case
+	        last_seen[user] = [time(), last_seen[old][1], last_seen[old][2]]
+	    # bye old
             del last_seen[old]
             return hexchat.EAT_NONE
         else:
