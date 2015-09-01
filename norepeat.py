@@ -65,7 +65,7 @@ def filter_msg(word, word_eol, event, attrs):
             del last_seen[old]
             return hexchat.EAT_NONE
         else:
-            last_seen[userffff] = [time(), 0, 0]
+            last_seen[user] = [time(), 0, 0]
             return hexchat.EAT_NONE
 
     # Not many yet, count and set time again
