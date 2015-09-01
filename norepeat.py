@@ -23,19 +23,11 @@ user_sptoomany = -1  # Special case for those who very rarely talk and disconnec
                      # but overall spam channel with disc/c. -1 means disabled.
                      # MUST be above user_toomany to work properly.
 
-halt = False
-
 def new_msg(word, word_eol, event, attrs):
     user = hexchat.strip(word[0]) + "@" +  hexchat.get_info("network")
-    # If the user logged in before we did (which means the Join part of
-    # filter_msg didn't take effect), add to the dict.
-    if user not in last_seen:
-        last_seen[user]= [time(), 0, 0]
-        return hexchat.EAT_NONE
     # person spoke! reset join/leave count.
     last_seen[user]= [time(), 0, 0] # this is only way to reset "special case".
     return hexchat.EAT_NONE
-    
 
 
 def filter_msg(word, word_eol, event, attrs):
@@ -48,13 +40,13 @@ def filter_msg(word, word_eol, event, attrs):
             return hexchat.EAT_NONE
         elif last_seen[user][0] + user_timeout < time():
             # it has aged off so reset
-            # now is special case enabled? if so, check if above special case number.
+            last_seen[user] = [time(), 0, last_seen[user][2]] # do not reset special case, it has no expire)
+            # now, is special case enabled? if so, check if above special case number.
             if user_sptoomany > -1:
               if last_seen[user][2] >= user_sptoomany:
 		last_seen[user] = [time(), last_seen[user][1] + 1, last_seen[user][2] + 1]
-		print("now blocked special case: ", user)
+		#print("now blocked special case: ", user)
                 return hexchat.EAT_ALL
-            last_seen[user] = [time(), 0, last_seen[user][2]] # do not reset special case, it has no expire)
 
     # If the user changed his nick, check if we've been tracking before
     # and transfer the stats if so. Otherwise, add to the dict.
@@ -73,18 +65,20 @@ def filter_msg(word, word_eol, event, attrs):
             del last_seen[old]
             return hexchat.EAT_NONE
         else:
-            last_seen[user] = [time(), 0, 0]
+            last_seen[userffff] = [time(), 0, 0]
             return hexchat.EAT_NONE
 
     # Not many yet, count and set time again
     if last_seen[user][1] <= user_toomany:
         last_seen[user][0] = time()
         last_seen[user][1] += 1
+        last_seen[user][2] += 1
         return hexchat.EAT_NONE
     # too many times join/leave? no spam! (also count and set time again)
     elif last_seen[user][1] > user_toomany:
         last_seen[user][0] = time()
         last_seen[user][1] += 1
+        last_seen[user][2] += 1
         #print("now blocked 20 min for join/leave: ", user)
         return hexchat.EAT_ALL
 
