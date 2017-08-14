@@ -15,7 +15,7 @@ last_seen = {}      # For each entry: the key is the user's nickname, the entry
                     #            element 1: how many times join/leave
                     #            element 2: how many times join/leave special case
 
-user_timeout = 1200  # How long before join/leave timer resets (20 min)
+user_timeout = 3660  # How long before join/leave timer resets (20 min)
 
 user_toomany = 1     # how many leave/join before start eating join/leave
 
@@ -44,8 +44,8 @@ def filter_msg(word, word_eol, event, attrs):
             # now, is special case enabled? if so, check if above special case number.
             if user_sptoomany > -1:
               if last_seen[user][2] >= user_sptoomany:
-		last_seen[user] = [time(), last_seen[user][1] + 1, last_seen[user][2] + 1]
-		#print("now blocked special case: ", user)
+                last_seen[user] = [time(), last_seen[user][1] + 1, last_seen[user][2] + 1]
+                #print("now blocked special case: ", user)
                 return hexchat.EAT_ALL
 
     # If the user changed his nick, check if we've been tracking before
@@ -58,10 +58,10 @@ def filter_msg(word, word_eol, event, attrs):
             if last_seen[old][0] + user_timeout < time():
                 # it has aged off so reset
                 last_seen[user] = [time(), 0, last_seen[old][2]] # dont reset special case
-	    else:
+            else:
 	        # reset time but not how many times nor special case
-	        last_seen[user] = [time(), last_seen[old][1], last_seen[old][2]]
-	    # bye old
+                last_seen[user] = [time(), last_seen[old][1], last_seen[old][2]]
+            # bye old
             del last_seen[old]
             return hexchat.EAT_NONE
         else:
